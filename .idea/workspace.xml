@@ -19,7 +19,9 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="81405b39-9376-4b36-aa06-2daafdb72b6f" name="Default Changelist" comment="pieces drawn" />
+    <list default="true" id="81405b39-9376-4b36-aa06-2daafdb72b6f" name="Default Changelist" comment="pieces drawn">
+      <change beforePath="$PROJECT_DIR$/script.js" beforeDir="false" afterPath="$PROJECT_DIR$/script.js" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -63,7 +65,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1637633293446</updated>
-      <workItem from="1637633295580" duration="7403000" />
+      <workItem from="1637633295580" duration="12807000" />
     </task>
     <task id="LOCAL-00001" summary="board drawn">
       <created>1637636757654</created>
