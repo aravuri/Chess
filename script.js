@@ -1,5 +1,6 @@
 const canvas = document.querySelector(".board");
 const ctx = canvas.getContext('2d');
+let colour = true;
 const PIECES = {
     NONE: 0,
     PAWN: 1,
@@ -8,6 +9,15 @@ const PIECES = {
     ROOK: 4,
     QUEEN: 5,
     KING: 6
+}
+const value = {
+    0: 0,
+    1: 1,
+    2: 3,
+    3: 3,
+    4: 5,
+    5: 9,
+    6: 1000
 }
 const text = {
     0: null,
@@ -119,11 +129,47 @@ function getCursorPosition(canvas, event) {
     return [x, y];
 }
 
-function getMoveChoices() {
+function getMoveChoices(board, selectedPos) {
     let movesPos = [];
+    let selectedPiece = board[selectedPos[1]][selectedPos[0]];
+    if (selectedPiece == null) {
+        return [];
+    }
     switch (selectedPiece.type) {
         case PIECES.PAWN:
-            movesPos.push([selectedPos[0], selectedPos[1] - 1]);
+            if (selectedPiece.white) {
+                if (selectedPos[1] === 0) {
+                    return [];
+                }
+                if (!board[selectedPos[1] - 1][selectedPos[0]]) {
+                    movesPos.push([selectedPos[0], selectedPos[1] - 1]);
+                }
+                if (selectedPos[1] === 6 && !board[selectedPos[1] - 1][selectedPos[0]] && !board[selectedPos[1] - 2][selectedPos[0]]) {
+                    movesPos.push([selectedPos[0], selectedPos[1] - 2]);
+                }
+                if (board[selectedPos[1] - 1][selectedPos[0] - 1]) {
+                    movesPos.push([selectedPos[0] - 1, selectedPos[1] - 1]);
+                }
+                if (board[selectedPos[1] - 1][selectedPos[0] + 1]) {
+                    movesPos.push([selectedPos[0] + 1, selectedPos[1] - 1]);
+                }
+            } else {
+                if (selectedPos[1] === 7) {
+                    return [];
+                }
+                if (!board[selectedPos[1] + 1][selectedPos[0]]) {
+                    movesPos.push([selectedPos[0], selectedPos[1] + 1]);
+                }
+                if (selectedPos[1] === 1 && !board[selectedPos[1] + 1][selectedPos[0]] && !board[selectedPos[1] + 2][selectedPos[0]]) {
+                    movesPos.push([selectedPos[0], selectedPos[1] + 2]);
+                }
+                if (board[selectedPos[1] + 1][selectedPos[0] - 1]) {
+                    movesPos.push([selectedPos[0] - 1, selectedPos[1] + 1]);
+                }
+                if (board[selectedPos[1] + 1][selectedPos[0] + 1]) {
+                    movesPos.push([selectedPos[0] + 1, selectedPos[1] + 1]);
+                }
+            }
             break;
         case PIECES.KNIGHT:
             movesPos.push([selectedPos[0] - 2, selectedPos[1] - 1]);
@@ -136,14 +182,14 @@ function getMoveChoices() {
             movesPos.push([selectedPos[0] + 1, selectedPos[1] + 2]);
             break;
         case PIECES.BISHOP:
-            addDiagonal(movesPos);
+            addDiagonal(board, selectedPos, movesPos);
             break;
         case PIECES.ROOK:
-            addCross(movesPos);
+            addCross(board, selectedPos, movesPos);
             break;
         case PIECES.QUEEN:
-            addDiagonal(movesPos);
-            addCross(movesPos);
+            addDiagonal(board, selectedPos, movesPos);
+            addCross(board, selectedPos, movesPos);
             break;
         case PIECES.KING:
             movesPos.push([selectedPos[0] - 1, selectedPos[1] - 1]);
@@ -156,48 +202,39 @@ function getMoveChoices() {
             movesPos.push([selectedPos[0], selectedPos[1] - 1]);
             break;
     }
+    movesPos = movesPos.filter(move => move[0] >= 0 && move[0] < 8 && move[1] >= 0 && move[1] < 8 &&
+        (!board[move[1]][move[0]] || board[move[1]][move[0]].white !== board[selectedPos[1]][selectedPos[0]].white));
+    // console.log(movesPos);
     return movesPos;
 }
 
-function addDiagonal(movesPos) {
+function addDiagonal(board, selectedPos, movesPos) {
     let directions = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
     for (let i = 0; i < directions.length; i++) {
         let direction = directions[i];
         let x = selectedPos[0];
         let y = selectedPos[1];
-        console.log(direction);
-        console.log(x);
-        console.log(y);
         do {
             x += direction[0];
             y += direction[1];
-            console.log(x + " " + y);
             movesPos.push([x, y]);
-            console.log(movesPos);
         }
         while (0 <= x && x < 8 && 0 <= y && y < 8 && !board[y][x]);
-        console.log(movesPos);
     }
 }
 
-function addCross(movesPos) {
+function addCross(board, selectedPos, movesPos) {
     let directions = [[1, 0], [-1, 0], [0, 1], [0, -1]];
     for (let i = 0; i < directions.length; i++) {
         let direction = directions[i];
         let x = selectedPos[0];
         let y = selectedPos[1];
-        console.log(direction);
-        console.log(x);
-        console.log(y);
         do {
             x += direction[0];
             y += direction[1];
-            console.log(x + " " + y);
             movesPos.push([x, y]);
-            console.log(movesPos);
         }
         while (0 <= x && x < 8 && 0 <= y && y < 8 && !board[y][x]);
-        console.log(movesPos);
     }
 }
 
@@ -210,37 +247,94 @@ function isLegal(position) {
     return false;
 }
 
-function move(pos1, pos2) {
-    board[pos2[1]][pos2[0]] = board[pos1[1]][pos1[0]];
-    board[pos1[1]][pos1[0]] = null;
+function move(board, pos1, pos2) {
+    let copy = board.map(function(arr) {
+        return arr.slice();
+    });
+    copy[pos2[1]][pos2[0]] = copy[pos1[1]][pos1[0]];
+    copy[pos1[1]][pos1[0]] = null;
+    return copy;
+}
+
+function minimax(position, posEval, movesAhead, side) {
+    if (movesAhead === 0) {
+        return {move: null, value: posEval(position)};
+    }
+    let bestMove = {startPos: [-1, -1], endPos: [-1, -1]};
+    let bestVal = -99999;
+    for (let i = 0; i < 8; i++) {
+        for (let j = 0; j < 8; j++) {
+            if (position[j][i] && position[j][i].white === side) {
+                let sPos = [i, j];
+                let validMoves = getMoveChoices(position, sPos);
+                for (let k = 0; k < validMoves.length; k++) {
+                    let moveBoard = move(position, sPos, validMoves[k]);
+                    let newVal = posEval(moveBoard, side) -
+                        minimax(moveBoard, posEval, movesAhead - 1, !side).value;
+                    // console.log(newVal);
+                    if (newVal > bestVal) {
+                        bestVal = newVal;
+                        bestMove.startPos = sPos;
+                        bestMove.endPos = validMoves[k];
+                    }
+                }
+            }
+        }
+    }
+    return {move: bestMove, value: bestVal};
+}
+
+function defaultPosEval(position, side) {
+    let sum = 0;
+    for (let i = 0; i < 8; i++) {
+        for (let j = 0; j < 8; j++) {
+            if (position[i][j]) {
+                sum += (side === position[i][j].white ? 1 : -1) * value[position[i][j].type];
+            }
+        }
+    }
+    return sum;
 }
 
 canvas.addEventListener('mousedown', function(e) {
     let clickedPos = getCursorPosition(canvas, e);
     if (!selectedPos) {
-        if (board[clickedPos[1]][clickedPos[0]]) {
+        if (board[clickedPos[1]][clickedPos[0]] && board[clickedPos[1]][clickedPos[0]].white === colour) {
             selectedPos = clickedPos;
             selectedPiece = board[selectedPos[1]][selectedPos[0]];
-            movesPos = getMoveChoices();
+            movesPos = getMoveChoices(board, selectedPos);
         } else {
             selectedPos = null;
             selectedPiece = null;
             movesPos = [];
         }
     } else {
-        if (isLegal(clickedPos)) {
-            move(selectedPos, clickedPos);
+        if (clickedPos[0] === selectedPos[0] && clickedPos[1] === selectedPos[1]) {
             selectedPos = null;
             selectedPiece = null;
             movesPos = [];
-        } else if (board[clickedPos[1]][clickedPos[0]]) {
-            selectedPos = clickedPos;
-            selectedPiece = board[selectedPos[1]][selectedPos[0]];
-            movesPos = getMoveChoices();
+        } else {
+            if (isLegal(clickedPos)) {
+                board = move(board, selectedPos, clickedPos);
+                selectedPos = null;
+                selectedPiece = null;
+                movesPos = [];
+                let best = minimax(board, defaultPosEval, 4, false);
+                console.log(best);
+                board = move(board, best.move.startPos, best.move.endPos);
+            } else if (board[clickedPos[1]][clickedPos[0]] && board[clickedPos[1]][clickedPos[0]].white === colour) {
+                selectedPos = clickedPos;
+                selectedPiece = board[selectedPos[1]][selectedPos[0]];
+                movesPos = getMoveChoices(board, selectedPos);
+            } else {
+                selectedPos = null;
+                selectedPiece = null;
+                movesPos = [];
+            }
         }
     }
     drawBoard();
-    console.log(movesPos);
+    // console.log(movesPos);
 })
 
 drawBoard();
