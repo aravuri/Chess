@@ -253,6 +253,9 @@ function move(board, pos1, pos2) {
     });
     copy[pos2[1]][pos2[0]] = copy[pos1[1]][pos1[0]];
     copy[pos1[1]][pos1[0]] = null;
+    if (copy[pos2[1]][pos2[0]].type === PIECES.PAWN && (pos2[1] === 7 || pos2[1] === 0)) {
+        copy[pos2[1]][pos2[0]] = new Piece(PIECES.QUEEN, copy[pos2[1]][pos2[0]].white);
+    }
     return copy;
 }
 
@@ -293,7 +296,7 @@ function defaultPosEval(position, side) {
             }
         }
     }
-    return sum;
+    return sum + 0.1*Math.random();
 }
 
 canvas.addEventListener('mousedown', function(e) {
