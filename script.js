@@ -319,9 +319,13 @@ canvas.addEventListener('mousedown', function(e) {
                 selectedPos = null;
                 selectedPiece = null;
                 movesPos = [];
-                let best = minimax(board, defaultPosEval, 4, false);
-                console.log(best);
-                board = move(board, best.move.startPos, best.move.endPos);
+                drawBoard();
+                setTimeout(function () {
+                    let best = minimax(board, defaultPosEval, 4, false);
+                    console.log(best);
+                    board = move(board, best.move.startPos, best.move.endPos);
+                    drawBoard();
+                }, 100)
             } else if (board[clickedPos[1]][clickedPos[0]] && board[clickedPos[1]][clickedPos[0]].white === colour) {
                 selectedPos = clickedPos;
                 selectedPiece = board[selectedPos[1]][selectedPos[0]];
